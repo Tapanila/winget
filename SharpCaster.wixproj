@@ -1,0 +1,19 @@
+<Project Sdk="WixToolset.Sdk/6.0.0">
+  <PropertyGroup>
+    <OutputType>Package</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <PackageId>SharpCaster</PackageId>
+    <Title>SharpCaster</Title>
+    <Description>SharpCaster - Cast media to Chromecast devices</Description>
+    <Manufacturer>Tapanila</Manufacturer>
+    <Version>3.0.0-beta1</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WixToolset.Sdk" Version="6.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Wix Include="SharpCaster.wxs" />
+  </ItemGroup>
+</Project>

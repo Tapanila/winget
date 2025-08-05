@@ -1,0 +1,121 @@
+name: Build and Release SharpCaster MSI
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *'  # Check daily at 2 AM UTC
+
+jobs:
+  check-and-build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Get latest SharpCaster release
+      id: get_release
+      run: |
+        $response = Invoke-RestMethod -Uri "https://api.github.com/repos/Tapanila/SharpCaster/releases/latest"
+        $version = $response.tag_name
+        $downloadUrlX64 = $response.assets | Where-Object { $_.name -eq "sharpcaster-win-x64.exe" } | Select-Object -ExpandProperty browser_download_url
+        $downloadUrlARM64 = $response.assets | Where-Object { $_.name -eq "sharpcaster-win-arm.exe" } | Select-Object -ExpandProperty browser_download_url
+        
+        echo "version=$version" >> $env:GITHUB_OUTPUT
+        echo "download_url_x64=$downloadUrlX64" >> $env:GITHUB_OUTPUT
+        echo "download_url_arm64=$downloadUrlARM64" >> $env:GITHUB_OUTPUT
+        echo "Latest SharpCaster version: $version"
+        echo "Download URL x64: $downloadUrlX64"
+        echo "Download URL ARM64: $downloadUrlARM64"
+      shell: pwsh
+      
+    - name: Check if release already exists
+      id: check_release
+      run: |
+        try {
+          $response = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ steps.get_release.outputs.version }}" -Headers @{ Authorization = "token ${{ secrets.GITHUB_TOKEN }}" }
+          echo "exists=true" >> $env:GITHUB_OUTPUT
+          echo "Release ${{ steps.get_release.outputs.version }} already exists"
+        } catch {
+          echo "exists=false" >> $env:GITHUB_OUTPUT
+          echo "Release ${{ steps.get_release.outputs.version }} does not exist"
+        }
+      shell: pwsh
+      
+    - name: Download SharpCaster executables
+      if: steps.check_release.outputs.exists == 'false'
+      run: |
+        Invoke-WebRequest -Uri "${{ steps.get_release.outputs.download_url_x64 }}" -OutFile "sharpcaster-win-x64.exe"
+        Invoke-WebRequest -Uri "${{ steps.get_release.outputs.download_url_arm64 }}" -OutFile "sharpcaster-win-arm.exe"
+        echo "Downloaded sharpcaster-win-x64.exe and sharpcaster-win-arm.exe"
+      shell: pwsh
+      
+    - name: Update version in WiX project
+      if: steps.check_release.outputs.exists == 'false'
+      run: |
+        $version = "${{ steps.get_release.outputs.version }}" -replace '^v', ''
+        
+        # Update .wixproj file
+        $wixproj = Get-Content "SharpCaster.wixproj"
+        $wixproj = $wixproj -replace '<Version>.*</Version>', "<Version>$version</Version>"
+        $wixproj | Set-Content "SharpCaster.wixproj"
+        
+        # Update .wxs file
+        $wxs = Get-Content "SharpCaster.wxs"
+        $wxs = $wxs -replace 'Version="[^"]*"', "Version=`"$version`""
+        $wxs | Set-Content "SharpCaster.wxs"
+        
+        echo "Updated version to $version"
+      shell: pwsh
+      
+    - name: Setup .NET
+      if: steps.check_release.outputs.exists == 'false'
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '6.0.x'
+        
+    - name: Setup WiX Toolset
+      if: steps.check_release.outputs.exists == 'false'
+      run: |
+        dotnet tool install --global wix --version 6.0.1
+        wix extension add WixToolset.UI.wixext
+      shell: pwsh
+      
+    - name: Build MSI
+      if: steps.check_release.outputs.exists == 'false'
+      run: |
+        dotnet build SharpCaster.wixproj -c Release
+        
+        # Find the generated MSI file
+        $msiFile = Get-ChildItem -Path "bin\Release" -Filter "*.msi" -Recurse | Select-Object -First 1
+        if ($msiFile) {
+          $newName = "SharpCaster-${{ steps.get_release.outputs.version }}.msi"
+          Copy-Item $msiFile.FullName $newName
+          echo "msi_path=$newName" >> $env:GITHUB_OUTPUT
+          echo "Built MSI: $newName"
+        } else {
+          echo "ERROR: MSI file not found"
+          exit 1
+        }
+      shell: pwsh
+      id: build_msi
+      
+    - name: Create Release
+      if: steps.check_release.outputs.exists == 'false'
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ steps.get_release.outputs.version }}
+        name: SharpCaster ${{ steps.get_release.outputs.version }}
+        body: |
+          SharpCaster MSI installer package for version ${{ steps.get_release.outputs.version }}
+          
+          This release automatically packages the latest SharpCaster executable from the [official repository](https://github.com/Tapanila/SharpCaster).
+          
+          ## Installation
+          Download the MSI file and run it to install SharpCaster on your Windows system.
+        files: |
+          SharpCaster-${{ steps.get_release.outputs.version }}.msi
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

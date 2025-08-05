@@ -1,0 +1,22 @@
+# Build outputs
+bin/
+obj/
+*.msi
+*.wixpdb
+*.wixobj
+
+# Downloaded executables
+sharpcaster-win-x64.exe
+sharpcaster-win-arm.exe
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# JetBrains
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store
