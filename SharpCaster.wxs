@@ -1,42 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
-  <Package Name="SharpCaster" Version="3.0.0" Manufacturer="Tapanila" UpgradeCode="12345678-1234-5678-9abc-123456789012">
-    
-    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
-    
+  <Package
+    Name="SharpCaster"
+    Version="3.0.0"
+    Manufacturer="Tapanila"
+    UpgradeCode="1f0a8a1b-785c-4b2f-981c-9c36ad8f9fd3">
+    <MajorUpgrade DowngradeErrorMessage="A newer version of SharpCaster is already installed." />
     <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+    <Icon Id="SharpCasterIcon" SourceFile="SharpCaster.ico" />
+    <Property Id="ARPPRODUCTICON" Value="SharpCasterIcon" />
     
     <Feature Id="ProductFeature" Title="SharpCaster" Level="1">
-      <ComponentGroupRef Id="ProductComponents" />
+      <ComponentGroupRef Id="AppComponents" />
     </Feature>
-    
-    <StandardDirectory Id="ProgramFiles64Folder">
-      <Directory Id="INSTALLFOLDER" Name="SharpCaster" />
-    </StandardDirectory>
   </Package>
   
   <Fragment>
-    <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
-      <!-- x64 executable - installed on x64 systems -->
-      <Component Id="SharpCasterExecutableX64" Guid="87654321-4321-8765-cba9-876543210987" 
-                 Condition="VersionNT64">
-        <File Id="SharpCasterExeX64" Name="SharpCaster.exe" Source="sharpcaster-win-x64.exe" KeyPath="yes">
-          <Shortcut Id="StartMenuShortcutX64" Directory="ProgramMenuFolder" Name="SharpCaster" 
-                   Description="Cast media to Chromecast devices" WorkingDirectory="INSTALLFOLDER" />
-          <Shortcut Id="DesktopShortcutX64" Directory="DesktopFolder" Name="SharpCaster" 
-                   Description="Cast media to Chromecast devices" WorkingDirectory="INSTALLFOLDER" />
-        </File>
-      </Component>
-      
-      <!-- ARM64 executable - installed on ARM64 systems -->
-      <Component Id="SharpCasterExecutableARM64" Guid="11111111-2222-3333-4444-555555555555" 
-                 Condition="VersionNT64 AND MsiNTProcessorArchitecture=&quot;ARM64&quot;">
-        <File Id="SharpCasterExeARM64" Name="SharpCaster.exe" Source="sharpcaster-win-arm.exe" KeyPath="yes">
-          <Shortcut Id="StartMenuShortcutARM64" Directory="ProgramMenuFolder" Name="SharpCaster" 
-                   Description="Cast media to Chromecast devices" WorkingDirectory="INSTALLFOLDER" />
-          <Shortcut Id="DesktopShortcutARM64" Directory="DesktopFolder" Name="SharpCaster" 
-                   Description="Cast media to Chromecast devices" WorkingDirectory="INSTALLFOLDER" />
-        </File>
+	<StandardDirectory Id="ProgramFiles6432Folder">
+		<Directory Id="CompanyFolder" Name="!(bind.Property.Manufacturer)">
+			<Directory Id="INSTALLFOLDER" Name="!(bind.Property.ProductName)" />
+		</Directory>
+	</StandardDirectory>
+    <ComponentGroup Id="AppComponents" Directory="INSTALLFOLDER">
+      <Component Id="SharpCasterExecutable" Guid="5d457ed0-34a2-4b1c-8dea-b60a67554596">
+		<?if $(var.Platform) = Arm64?>
+		  <File Id="SharpCasterExe" Name="SharpCaster.exe" Source="sharpcaster-win-arm.exe"/>
+		<?else?>
+		  <File Id="SharpCasterExe" Name="SharpCaster.exe" Source="sharpcaster-win-x64.exe" />
+		<?endif?>
       </Component>
     </ComponentGroup>
   </Fragment>
