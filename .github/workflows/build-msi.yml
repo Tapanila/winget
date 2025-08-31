@@ -82,7 +82,7 @@ jobs:
         dotnet build SharpCaster.wixproj -c Release
         
         # Find the generated MSI file
-        $msiFile = Get-ChildItem -Path "bin\Release" -Filter "*.msi" -Recurse | Select-Object -First 1
+        $msiFile = Get-ChildItem -Path "bin\" -Filter "*.msi" -Recurse | Select-Object -First 1
         if ($msiFile) {
           $newName = "SharpCaster-${{ steps.get_release.outputs.version }}.msi"
           Copy-Item $msiFile.FullName $newName
