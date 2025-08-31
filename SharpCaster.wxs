@@ -28,6 +28,12 @@
 		<?else?>
 		  <File Id="SharpCasterExe" Name="SharpCaster.exe" Source="sharpcaster-win-x64.exe" />
 		<?endif?>
+        <Environment Id="AddInstallFolderToPath"
+                      Name="PATH"
+                      Action="set"
+                      System="yes"
+                      Part="last"
+                      Value="[INSTALLFOLDER]" />
       </Component>
     </ComponentGroup>
   </Fragment>
