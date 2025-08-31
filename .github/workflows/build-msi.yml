@@ -53,16 +53,11 @@ jobs:
     - name: Update version in WiX project
       if: steps.check_release.outputs.exists == 'false'
       run: |
-        $version = "${{ steps.get_release.outputs.version }}" -replace '^v', ''
-        
-        # Update .wixproj file
-        $wixproj = Get-Content "SharpCaster.wixproj"
-        $wixproj = $wixproj -replace '<Version>.*</Version>', "<Version>$version</Version>"
-        $wixproj | Set-Content "SharpCaster.wixproj"
+        $version = "${{ steps.get_release.outputs.version }}" -replace '^v', ''  
         
         # Update .wxs file
         $wxs = Get-Content "SharpCaster.wxs"
-        $wxs = $wxs -replace 'Version="[^"]*"', "Version=`"$version`""
+        $wxs = $wxs -creplace 'Version="[^"]*"', "Version=`"$version`""
         $wxs | Set-Content "SharpCaster.wxs"
         
         echo "Updated version to $version"
