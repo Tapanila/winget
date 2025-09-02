@@ -28,20 +28,35 @@
     </StandardDirectory>
 
     <ComponentGroup Id="AppComponents" Directory="INSTALLFOLDER">
-      <Component Id="SharpCasterX64" Guid="{3A8B5B69-2DAB-4E9F-AC7F-3D9B2B7C2B39}" Bitness="always64"
+      <!-- x64 -->
+      <Component Id="SharpCasterX64" Guid="*" Bitness="always64"
                 Condition="WIX_NATIVE_MACHINE = 34404">
+        <!-- Install with a unique name -->
         <File Id="SharpCasterExeX64"
-              Name="SharpCaster.exe" ShortName="SHRCASX.EXE"
+              Name="SharpCaster.x64.exe"
               Source="sharpcaster-win-x64.exe" />
-        <Environment Id="PathX64" Name="PATH" Action="set" System="yes" Part="last" Value="[INSTALLFOLDER]" />
+        <!-- Copy/rename to the common name -->
+        <CopyFile Id="CopyX64ToCommon"
+                  DestinationDirectory="INSTALLFOLDER"
+                  DestinationName="SharpCaster.exe" />
+        <!-- Remove the unique file after install -->
+        <RemoveFile Id="CleanupX64Unique"
+                    Name="SharpCaster.x64.exe"
+                    On="install" />
       </Component>
 
-      <Component Id="SharpCasterARM64" Guid="{A2F7D0B5-7C2E-4C3E-9C71-5A2B1A7C4F11}" Bitness="always64"
+      <!-- ARM64 -->
+      <Component Id="SharpCasterARM64" Guid="*" Bitness="always64"
                 Condition="WIX_NATIVE_MACHINE = 43620">
         <File Id="SharpCasterExeARM64"
-              Name="SharpCaster.exe" ShortName="SHRCASA.EXE"
+              Name="SharpCaster.arm64.exe"
               Source="sharpcaster-win-arm.exe" />
-        <Environment Id="PathArm64" Name="PATH" Action="set" System="yes" Part="last" Value="[INSTALLFOLDER]" />
+        <CopyFile Id="CopyArmToCommon"
+                  DestinationDirectory="INSTALLFOLDER"
+                  DestinationName="SharpCaster.exe" />
+        <RemoveFile Id="CleanupArmUnique"
+                    Name="SharpCaster.arm64.exe"
+                    On="install" />
       </Component>
     </ComponentGroup>
   </Fragment>
